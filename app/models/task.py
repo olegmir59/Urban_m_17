@@ -5,9 +5,9 @@ from app.models.user import User
 
 
 class Task(Base):
-
     __tablename__ = 'tasks'
-    __table_args__ = {'extend_existing': True}
+
+    #__table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
     content = Column(String)
@@ -16,9 +16,13 @@ class Task(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
     slug = Column(String, unique=True, index=True)
 
-    tasks = relationship("User", back_populates="tasks")
+    user = relationship("User", back_populates="tasks")
 
 
+"""
+    def __repr__(self):
+        return f"<Task(id={self.id}, title='{self.title}', user_id={self.user_id})>"
 
 from sqlalchemy.schema import CreateTable
 print(CreateTable(Task.__table__))
+"""

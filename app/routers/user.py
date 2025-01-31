@@ -1,19 +1,22 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, FastAPI
 # Сессия БД
 from sqlalchemy.orm import Session
 # Функция подключения к БД
 from app.backend.db_depends import get_db
 # Аннотации, Модели БД и Pydantic.
 from typing import Annotated
-from app.models import *
-from app.schemas import CreateUser, UpdateUser
-# Функции работы с записями.
-from sqlalchemy import insert, select, update, delete
 # Функция создания slug-строки
 from slugify import slugify
+# Функции работы с записями.
+from sqlalchemy import insert, select, update, delete
+
+
+from app.models import *
+from app.schemas import CreateUser, UpdateUser
 
 router = APIRouter(prefix='/user', tags=['user'])
 Sess = Annotated[Session, Depends(get_db)]
+
 
 @router.get('/')
 async def all_users(db: Annotated[Session, Depends(get_db)]):
@@ -29,38 +32,44 @@ async def user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
     return user_query
 
 
+
 @router.post('/create')
-async def create_user(sess: Sess, user: CreateUser) -> dict:
+async def create_user(sess: Sess, new_user: CreateUser) -> dict:
     if sess.scalar(select(User.username)
-                   .where(User.username == user.username)):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                   .where(User.username == new_user.username)):
+        raise HTTPException(status_code=409,
                             detail='Duplicated username')
-    user_dict = dict(user)
-    user_dict['slug'] = slugify(user.username)
+        #raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+        #                    detail='Duplicated username')
+
+    user_dict = dict(new_user)
+    user_dict['slug'] = slugify(new_user.username)
     sess.execute(insert(User), user_dict)
     sess.commit()
-    return {'status_code': status.HTTP_201_CREATED,
-            'transaction': 'Successful'}
+    return {'status_code': 201, 'transaction': 'Successful'}
+    #return {'status_code': status.HTTP_201_CREATED, 'transaction': 'Successful'}"""
 
-"""@router.post('/create')
+""" 
+@router.post('/create')
 async def create_user(db: Annotated[Session, Depends(get_db)], new_user: CreateUser):
     result = db.execute(insert(User).values(username=new_user.username,
                                             firstname=new_user.firstname,
                                             lastname=new_user.lastname,
                                             age=new_user.age,
-                                            slag=slugify(new_user.username)))
+                                            slug=slugify(new_user.username)))
     db.commit()
     return {'status_code': 'status.HTTP_201_CREATED', 'transaction': 'Successful'}
 
 
-   
 
+#   вариант  с HTTP_400_BAD_REQUEST
     try:
         new_user_data = {
             "username": slugify(new_user.username),
             "firstname": new_user.firstname,
             "lastname": new_user.lastname,
             "age": new_user.age,
+            "slug":slugify(new_user.username)
         }
         query = insert(User).values(**new_user_data)
         result = db.execute(query)
@@ -91,7 +100,6 @@ async def update_user(updated_user: UpdateUser, user_id: int, db: Annotated[Sess
     db.execute(query)
     db.commit()
     return {"status_code": status.HTTP_200_OK, "transaction": "User update is successful!"}
-
 
 
 @router.delete('/delete')

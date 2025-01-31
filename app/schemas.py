@@ -1,17 +1,68 @@
 from pydantic import BaseModel
 
-"""
-class User(BaseModel):
-    id: int  #  Поле для уникального идентификатора
-    username: str 
+# по лекции
+
+class UserBase(BaseModel):
+    username: str
     firstname: str
     lastname: str
     age: int
+    slug: str
 
-#    class Config:
-#        orm_mode = True # Указывает, что объект может быть преобразован из ORM (например, SQLAlchemy)
-"""
 
+class CreateUser(UserBase):
+    pass
+#    username: str
+#    firstname: str
+#    lastname: str
+#    age: int
+
+
+class UpdateUser(UserBase):
+    pass
+#    firstname: str
+#    lastname: str
+#    age: int
+
+
+class User(UserBase):
+    id: int
+
+    class Config:
+        orm_mode = True  # Позволяет работать с данными ORM
+
+
+class TaskBase(BaseModel):
+    title: str
+    content: str
+    priority: int
+    completed: bool
+    user_id: int
+    slug: str
+
+
+class CreateTask(TaskBase):
+    pass
+#    title: str
+#    content: str
+#    priority: int
+
+
+class UpdateTask(TaskBase):
+    pass
+#    title: str
+#    content: str
+#    priority: int
+
+
+class Task(TaskBase):
+    id: int
+
+    class Config:
+        orm_mode = True  # Позволяет работать с данными ORM
+
+
+"""   более простой вариант
 
 class CreateUser(BaseModel):
     username: str
@@ -19,20 +70,19 @@ class CreateUser(BaseModel):
     lastname: str
     age: int
 
-
-class UpdateUser(BaseModel):
+class UpdateUser (BaseModel):
     firstname: str
     lastname: str
     age: int
 
-
-class CreateTask(BaseModel):
+class CreateTask (BaseModel):
     title: str
     content: str
     priority: int
 
-
-class UpdateTask(BaseModel):
+class UpdateTask (BaseModel):
     title: str
     content: str
-    priority: int
+    priority: int 
+    
+"""
