@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
-# по лекции
+"""
+# по лекции /рабочий вариант, только еще slug запрашивает/
 
 class UserBase(BaseModel):
     username: str
@@ -62,8 +63,8 @@ class Task(TaskBase):
         orm_mode = True  # Позволяет работать с данными ORM
 
 
-"""   более простой вариант
-
+"""
+# более простой вариант:
 class CreateUser(BaseModel):
     username: str
     firstname: str
@@ -85,4 +86,3 @@ class UpdateTask (BaseModel):
     content: str
     priority: int 
     
-"""
