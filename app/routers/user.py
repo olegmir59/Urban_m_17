@@ -30,12 +30,12 @@ async def all_users(db: Annotated[Session, Depends(get_db)]):
 async def user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
     user_query = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
     if user_query is None:
-        #raise HTTPException(status_code=404, detail="User was not found")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User was not found")
+        raise HTTPException(status_code=404, detail="User was not found")
+        #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User was not found")
     return user_query
 
 
-@router.get("/user_id/{user_id}/tasks")
+@router.get('/user_id/{user_id}/tasks')
 async def tasks_by_user_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
     tasks_query = db.execute(select(Task).where(Task.user_id == user_id))
     return list(tasks_query.scalars(Task))
@@ -45,8 +45,7 @@ async def tasks_by_user_id(user_id: int, db: Annotated[Session, Depends(get_db)]
 async def create_user(db: Annotated[Session, Depends(get_db)], new_user: CreateUser) -> dict:
     if db.scalar(select(User.username).where(User.username == new_user.username)):
         # Обработка исключений, таких как уникальный ключ
-        raise HTTPException(status_code=409,
-                            detail='Duplicated username')
+        raise HTTPException(status_code=409, detail='Duplicated username')
         #raise HTTPException(status_code=status.HTTP_409_CONFLICT,
         #                    detail='Duplicated username')
 
@@ -57,41 +56,16 @@ async def create_user(db: Annotated[Session, Depends(get_db)], new_user: CreateU
     return {'status_code': 201, 'transaction': 'Successful'}
     #return {'status_code': status.HTTP_201_CREATED, 'transaction': 'Successful'}
 
-""" 
-@router.post('/create')
-async def create_user(db: Annotated[Session, Depends(get_db)], new_user: CreateUser):
-    
-#   вариант  с HTTP_400_BAD_REQUEST
-    try:
-        new_user_data = {
-            "username": slugify(new_user.username),
-            "firstname": new_user.firstname,
-            "lastname": new_user.lastname,
-            "age": new_user.age,
-            "slug":slugify(new_user.username)
-        }
-        query = insert(User).values(**new_user_data)
-        result = db.execute(query)
-        db.commit()
-        return {"status_code": status.HTTP_201_CREATED, "transaction": "Successful"}
-    except Exception as e:
-        # Обработка исключений, таких как уникальный ключ
-        print(f"Error creating user: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to create user due to: {e}",
-        )
-"""
-
 
 @router.put('/update')
-async def update_user(updated_user: UpdateUser, user_id: int, db: Annotated[Session, Depends(get_db)]):
+async def update_user(db: Annotated[Session, Depends(get_db)], updated_user: UpdateUser, user_id: int):
     user_to_update = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
     if user_to_update is None:
         raise HTTPException(status_code=404, detail="User was not found")
-#        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User was not found")
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User was not found")
 
     updated_user_data = updated_user.dict(exclude_unset=True)
+    updated_user_data["slug"] = slugify(updated_user.username)
     query = (
         update(User).
         where(User.id == user_id).
@@ -100,8 +74,6 @@ async def update_user(updated_user: UpdateUser, user_id: int, db: Annotated[Sess
     db.execute(query)
     db.commit()
     return {"status_code": 200, "transaction": "User update is successful!"}
-    #return {"status_code": status.HTTP_200_OK, "transaction": "User update is successful!"}
-
 
 @router.delete('/delete')
 async def delete_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
@@ -120,11 +92,3 @@ async def delete_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
     db.commit()
     return {"status_code": 204, "transaction": "User deleted successfully!"}
     # return {"status_code": status.HTTP_204_NO_CONTENT, "transaction": "User deleted successfully!"}
-
-
-"""
-    # Удаляем все записи Task, связанные с данным пользователем
-    tasks_to_delete = db.execute(select(Task).where(Task.user_id == user_id))
-    for task_to_delete in tasks_to_delete:
-        db.delete(task_to_delete)
-"""

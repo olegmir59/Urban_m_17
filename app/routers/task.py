@@ -28,8 +28,8 @@ async def all_tasks(db: Annotated[Session, Depends(get_db)]):
 async def task_by_id(task_id: int, db: Annotated[Session, Depends(get_db)]):
     task_query = db.execute(select(Task).where(Task.id == task_id)).scalar_one_or_none()
     if task_query is None:
-        # raise HTTPException(status_code=404, detail="User was not found")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task was not found")
+         raise HTTPException(status_code=404, detail="User was not found")
+        #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task was not found")
     return task_query
 
 
