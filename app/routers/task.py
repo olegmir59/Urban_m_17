@@ -39,7 +39,7 @@ async def create_task(db: Annotated[Session, Depends(get_db)], new_task: CreateT
         "title": new_task.title,
         "content": new_task.content,
         "priority": new_task.priority,
-        "user_id": new_task.user_id,                  # user, а не user_id
+        "user_id": new_task.user_id,
         "slug": slugify(new_task.title)
     }
     query = insert(Task).values(**new_task_data)
@@ -50,15 +50,16 @@ async def create_task(db: Annotated[Session, Depends(get_db)], new_task: CreateT
 
 
 @router.put('/update')
-async def update_task(new_task: UpdateTask, user_id: int, db: Annotated[Session, Depends(get_db)]):
-    user_to_update = db.execute(select(Task).where(Task.id == user_id)).scalar_one_or_none()
-    if user_to_update is None:
-        raise HTTPException(status_code=404, detail="User was not found")
+async def update_task(updated_task: UpdateTask, task_id: int, db: Annotated[Session, Depends(get_db)]):
+    task_to_update = db.execute(select(Task).where(Task.id == task_id)).scalar_one_or_none()
+    if task_to_update is None:
+        raise HTTPException(status_code=404, detail="Task was not found")
 
-    updated_task_data = update_task.dict(exclude_unset=True)
+    updated_task_data = updated_task.dict(exclude_unset=True)
+    updated_task_data["slug"] = slugify(updated_task.title)
     query = (
         update(Task).
-        where(Task.id == user_id).
+        where(Task.id == task_id).
         values(**updated_task_data)
     )
     db.execute(query)
