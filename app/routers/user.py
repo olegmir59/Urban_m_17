@@ -1,5 +1,5 @@
+
 from fastapi import APIRouter, Depends, status, HTTPException, FastAPI
-# Сессия БД
 from sqlalchemy.orm import Session
 # Функция подключения к БД
 from app.backend.db_depends import get_db
@@ -9,13 +9,15 @@ from typing import Annotated
 from slugify import slugify
 # Функции работы с записями.
 from sqlalchemy import insert, select, update, delete
+#   для delete
+#from sqlalchemy.orm import Session
+#from sqlalchemy.sql.expression import delete
+#   для delete
 
-
-from app.models import *
+from app.models import Task, User
 from app.schemas import CreateUser, UpdateUser
 
 router = APIRouter(prefix='/user', tags=['user'])
-Sess = Annotated[Session, Depends(get_db)]
 
 
 @router.get('/')
@@ -28,11 +30,15 @@ async def all_users(db: Annotated[Session, Depends(get_db)]):
 async def user_by_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
     user_query = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
     if user_query is None:
-        raise HTTPException(status_code=404, detail="User was not found")
-        #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User was not found")
-
+        #raise HTTPException(status_code=404, detail="User was not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User was not found")
     return user_query
 
+
+@router.get("/user_id/{user_id}/tasks")
+async def tasks_by_user_id(user_id: int, db: Annotated[Session, Depends(get_db)]):
+    tasks_query = db.execute(select(Task).where(Task.user_id == user_id))
+    return list(tasks_query.scalars(Task))
 
 
 @router.post('/create')
@@ -49,7 +55,7 @@ async def create_user(db: Annotated[Session, Depends(get_db)], new_user: CreateU
     db.execute(insert(User), user_dict)
     db.commit()
     return {'status_code': 201, 'transaction': 'Successful'}
-    #return {'status_code': status.HTTP_201_CREATED, 'transaction': 'Successful'}"""
+    #return {'status_code': status.HTTP_201_CREATED, 'transaction': 'Successful'}
 
 """ 
 @router.post('/create')
@@ -107,5 +113,18 @@ async def delete_user(user_id: int, db: Annotated[Session, Depends(get_db)]):
     query = delete(User).where(User.id == user_id)
     db.execute(query)
     db.commit()
+
+    # Используем bulk_delete для удаления всех связанных записей Task
+    query = delete(Task).where(Task.user_id == user_id)
+    db.execute(query)
+    db.commit()
     return {"status_code": 204, "transaction": "User deleted successfully!"}
-    #return {"status_code": status.HTTP_204_NO_CONTENT, "transaction": "User deleted successfully!"}
+    # return {"status_code": status.HTTP_204_NO_CONTENT, "transaction": "User deleted successfully!"}
+
+
+"""
+    # Удаляем все записи Task, связанные с данным пользователем
+    tasks_to_delete = db.execute(select(Task).where(Task.user_id == user_id))
+    for task_to_delete in tasks_to_delete:
+        db.delete(task_to_delete)
+"""
